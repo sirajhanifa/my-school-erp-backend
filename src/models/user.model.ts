@@ -3,6 +3,13 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    // The school (tenant) this user belongs to
+    schlId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "School",
+      required: true,
+      index: true,
+    },
     name: { type: String, required: true, trim: true },
     email: {
       type: String,
