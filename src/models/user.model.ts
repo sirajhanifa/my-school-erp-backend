@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
+// Registers the Role model, so populate("role") works wherever User is used
+import "./role.model.js";
+
 const userSchema = new mongoose.Schema(
   {
     // The school (tenant) this user belongs to
@@ -20,10 +23,11 @@ const userSchema = new mongoose.Schema(
     },
     // select: false -> password is NOT returned by queries unless we ask for it with .select("+password")
     password: { type: String, required: true, minlength: 6, select: false },
+    // The user's role (a document in the roles collection)
     role: {
-      type: String,
-      enum: ["admin", "teacher", "student", "parent"],
-      default: "admin",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Role",
+      required: true,
     },
     isActive: { type: Boolean, default: true },
   },

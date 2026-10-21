@@ -26,9 +26,12 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // 2. Find the user (password is hidden by default, so ask for it)
+    // populate replaces the role's ObjectId with the role document (only its name here)
     const user = await User.findOne({
       email: String(email).toLowerCase().trim(),
-    }).select("+password");
+    })
+      .select("+password")
+      .populate<{ role: { name: string } | null }>("role", "name");
 
     // 3. Check the password
     // Same message for "wrong email" and "wrong password", so nobody can guess which emails exist.
@@ -68,7 +71,7 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role?.name,
       },
     });
   } catch (error) {
@@ -88,7 +91,9 @@ export const logout = (_req: Request, res: Response) => {
 // GET /api/auth/me  (protected: the auth middleware runs first and puts userId in res.locals)
 export const getMe = async (_req: Request, res: Response) => {
   try {
-    const user = await User.findById(res.locals.userId);
+    const user = await User.findById(res.locals.userId).populate<{
+      role: { name: string } | null;
+    }>("role", "name");
 
     if (!user || !user.isActive) {
       return res
@@ -101,7 +106,7 @@ export const getMe = async (_req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role?.name,
       },
     });
   } catch (error) {

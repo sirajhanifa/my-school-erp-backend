@@ -1,53 +1,38 @@
-// Adds a demo school and dummy users for testing login. Run with: npm run seed
-// Safe to run again: it removes this same school and users first, then creates them fresh.
+// Must be the first import so .env values are loaded before any other file reads process.env
 import "dotenv/config";
 import mongoose from "mongoose";
 
-import School from "./models/school.model.js";
-import User from "./models/user.model.js";
+import connectDB from "./config/db.js";
+import Role from "./models/role.model.js";
 
-type DummyUser = {
-  name: string;
-  email: string;
-  password: string;
-  role: "admin" | "teacher" | "student" | "parent";
-  isActive?: boolean;
-};
-
-const demoSchool = {
-  schlNm: "Demo Public School",
-  schlCd: "demo-school",
-  email: "office@school.com",
-};
-
-const dummyUsers: DummyUser[] = [
-  { name: "School Admin", email: "admin@school.com", password: "admin123", role: "admin" },
-  { name: "Priya Teacher", email: "teacher@school.com", password: "teacher123", role: "teacher" },
-  { name: "Arun Student", email: "student@school.com", password: "student123", role: "student" },
-  { name: "Meena Parent", email: "parent@school.com", password: "parent123", role: "parent" },
-  // To test the "account is inactive" error
-  { name: "Old Staff", email: "inactive@school.com", password: "inactive123", role: "teacher", isActive: false },
+const roles = [
+  { name: "admin", description: "Full access to manage the school, users and settings" },
+  { name: "principal", description: "Oversees academics, staff and school reports" },
+  { name: "teacher", description: "Manages classes, attendance, marks and homework" },
+  { name: "accountant", description: "Manages fees, payments and financial reports" },
+  { name: "librarian", description: "Manages library books, issues and returns" },
+  { name: "student", description: "Views own timetable, attendance, marks and fees" },
+  { name: "parent", description: "Views their child's attendance, marks and fee details" },
 ];
 
 const seed = async () => {
-  await mongoose.connect(process.env.MONGO_URI as string);
+  await connectDB();
 
-  await User.deleteMany({ email: { $in: dummyUsers.map((user) => user.email) } });
-  await School.deleteOne({ schlCd: demoSchool.schlCd });
+  // Upsert by name, so running the seed again updates existing roles instead of creating duplicates
+  for (const role of roles) {
+    await Role.updateOne(
+      { name: role.name, deleted: false },
+      { $set: { description: role.description } },
+      { upsert: true },
+    );
+  }
 
-  const school = await School.create(demoSchool);
-
-  // User.create (not insertMany) so the pre("save") hook hashes each password
-  await User.create(dummyUsers.map((user) => ({ ...user, schlId: school._id })));
-
-  console.log(`School created: ${school.schlNm} (${school.schlCd})`);
-  console.log("Dummy users created:");
-  console.table(dummyUsers.map(({ email, password, role, isActive }) => ({ email, password, role, active: isActive ?? true })));
-
+  console.log(`Seeded ${roles.length} roles`);
   await mongoose.disconnect();
 };
 
-seed().catch((error) => {
+seed().catch(async (error) => {
   console.error("Seeding failed:", error);
+  await mongoose.disconnect();
   process.exit(1);
 });

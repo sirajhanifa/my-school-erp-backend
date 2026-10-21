@@ -1,0 +1,55 @@
+# MySchool ERP — Backend
+
+Multi-tenant school ERP API. Express 5 + Mongoose 9 + TypeScript, ESM (`"type": "module"`). The frontend lives in `../my-school-erp-frontend`.
+
+## Commands
+
+- `npm run dev` — nodemon runs `tsx src/index.ts`, restarts on changes in `src/`
+- `npm run build` — `tsc` to `dist/`; `npm start` runs `dist/index.js`
+- `npm run seed` — runs `src/seed.ts` (upserts the default roles; safe to re-run)
+- `npx tsc --noEmit` — type-check. There are no tests and no linter.
+
+## Environment (`.env`)
+
+`PORT` (9000 — the frontend's Vite proxy points here), `NODE_ENV`, `MONGO_URI`, `JWT_SECRET`.
+`import "dotenv/config"` must stay the first import in any entry file (`index.ts`, `seed.ts`).
+
+## Layout
+
+```
+src/
+  index.ts          app setup, mounts routes at /api
+  config/db.ts      connectDB() — exits the process on failure
+  routes/index.ts   main router; register each new route file here
+  routes/*.routes.ts
+  controllers/*.controller.ts
+  middleware/auth.middleware.ts   protect: verifies JWT cookie, sets res.locals.userId
+  models/*.model.ts
+  seed.ts
+```
+
+## Conventions
+
+- **ESM imports use `.js` extensions** for local files, even though the source is `.ts` (`import User from "../models/user.model.js"`). `module: nodenext` requires it.
+- `verbatimModuleSyntax` is on: type-only imports must use `import type`.
+- `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess` are on — don't assign `undefined` to optional props, and handle possibly-undefined array/index access.
+- File naming: `<name>.model.ts`, `<name>.controller.ts`, `<name>.routes.ts`, `<name>.middleware.ts`. Default-export models and routers; named-export controller functions.
+- Models: `mongoose.model("Name", schema, "collection")` — always pass the collection name explicitly. Use `{ timestamps: true }` for `createdAt`/`updatedAt`.
+- Comments are plain-English and explain *why* (the codebase is written to be readable by learners). Keep that style.
+- Controllers: `try/catch`, return `res.status(...).json({ message })`, log with `console.error("<Action> error:", error)`, and send a generic 500 message to the client.
+
+## Data model
+
+- **School** (`schools`) is the tenant. Fields use abbreviated names: `schlNm`, `schlCd` (unique slug), and other models reference it via `schlId`. Data must never leak across schools — scope tenant data queries by `schlId`.
+- **User** (`users`): `schlId`, `name`, `email` (globally unique), `password` (`select: false`, bcrypt-hashed in a `pre("save")` hook — always save through the model, never write passwords with `updateOne`), `role`, `isActive`.
+- **Role** (`roles`): `name`, `description`, `deleted` (soft delete), timestamps. `name` is unique among non-deleted roles (partial index). Seeded roles: admin, principal, teacher, accountant, librarian, student, parent.
+- `User.role` is an **ObjectId ref to Role**. Populate it to get the name: `.populate<{ role: { name: string } | null }>("role", "name")`. The API returns `role` as the role *name* string to the frontend.
+- A model used in `populate()` must be registered before the query runs. `user.model.ts` imports `./role.model.js` for this reason — when adding new refs, import the referenced model in the referencing model file, or you'll get `MissingSchemaError`.
+- Soft-deleted documents (`deleted: true`) should be excluded from normal queries.
+
+## Auth
+
+- `POST /api/auth/login` → signs a JWT `{ userId }`, sets it in an httpOnly `token` cookie (1 day, or 7 days with `rememberMe`). Same error message for wrong email and wrong password.
+- `POST /api/auth/logout` clears the cookie. `GET /api/auth/me` (behind `protect`) returns the current user.
+- Inactive users (`isActive: false`) get 403 at login and 401 from `/me`.
+- Never return `password` or the token in a response body.
