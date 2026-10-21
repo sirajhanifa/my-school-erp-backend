@@ -9,6 +9,12 @@ import routes from "./routes/index.js";
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
+// Log every incoming request (method + URL) so we can see what the API is receiving
+app.use((req, _res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 app.use(express.json());
 app.use(cookieParser()); // lets us read cookies with req.cookies
 

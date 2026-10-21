@@ -6,7 +6,7 @@ Multi-tenant school ERP API. Express 5 + Mongoose 9 + TypeScript, ESM (`"type": 
 
 - `npm run dev` — nodemon runs `tsx src/index.ts`, restarts on changes in `src/`
 - `npm run build` — `tsc` to `dist/`; `npm start` runs `dist/index.js`
-- `npm run seed` — runs `src/seed.ts` (upserts the default roles; safe to re-run)
+- `npm run seed` — runs `src/seed.ts` (upserts the default roles and gives every school the default menu; safe to re-run)
 - `npx tsc --noEmit` — type-check. There are no tests and no linter.
 
 ## Environment (`.env`)
@@ -46,6 +46,8 @@ src/
 - `User.role` is an **ObjectId ref to Role**. Populate it to get the name: `.populate<{ role: { name: string } | null }>("role", "name")`. The API returns `role` as the role *name* string to the frontend.
 - A model used in `populate()` must be registered before the query runs. `user.model.ts` imports `./role.model.js` for this reason — when adding new refs, import the referenced model in the referencing model file, or you'll get `MissingSchemaError`.
 - Soft-deleted documents (`deleted: true`) should be excluded from normal queries.
+- **Module** (`modules`): the menu of a school, **one document per school** (`schlId` is unique). `modules` is an array of main menus `{ name, code, icon, path, isActive, deleted, subMenus: [...] }`; each submenu is `{ name, code, icon, path, isActive, deleted }`. Array order = display order. `icon` is a lucide-react icon name. A main menu with submenus has an empty `path`. `code` must be unique across all main menus and submenus of a school (checked in a `pre("validate")` hook, since indexes can't enforce it inside an array). The seed adds the default menu to every school, adding only missing items.
+- `GET /api/modules` (behind `protect`) returns the logged-in user's school menu, without inactive/deleted items (a hidden main menu hides its submenus).
 
 ## Auth
 
