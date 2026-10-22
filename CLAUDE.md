@@ -38,6 +38,7 @@ src/
 - File naming: `<name>.model.ts`, `<name>.controller.ts`, `<name>.routes.ts`, `<name>.middleware.ts`. Default-export models and routers; named-export controller functions.
 - Models: `mongoose.model("Name", schema, "collection")` — always pass the collection name explicitly. Use `{ timestamps: true }` for `createdAt`/`updatedAt`.
 - Comments are plain-English and explain *why* (the codebase is written to be readable by learners). Keep that style.
+- Keep comments simple and clear: one or two lines maximum. Avoid long explanations in comments.
 - Controllers: `try/catch`, return `res.status(...).json({ message })`, log with `console.error("<Action> error:", error)`, and send a generic 500 message to the client.
 
 ## Data model

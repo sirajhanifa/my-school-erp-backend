@@ -1,6 +1,5 @@
-// ONE-TIME cleanup: permanently removes every main menu (and its submenus)
-// except Dashboard from every school's menu document.
-// This cannot be undone. Run with: npx tsx src/scripts/remove-modules-except-dashboard.ts
+// ONE-TIME cleanup: permanently removes every main menu except Dashboard, in every school.
+// Cannot be undone. Run with: npx tsx src/scripts/remove-modules-except-dashboard.ts
 
 // Must be the first import so .env values are loaded before any other file reads process.env
 import "dotenv/config";

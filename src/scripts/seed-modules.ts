@@ -14,14 +14,7 @@ type SubMenu = { name: string; code: string; icon: string; path: string; order: 
 type MainMenu = { name: string; code: string; icon: string; path?: string; order: number; subMenus: SubMenu[] };
 
 // The default menu. order = display position (1 shows first).
-//
-// Example with submenus:
-// {
-//   name: "Students", code: "students", icon: "Users", order: 2,
-//   subMenus: [
-//     { name: "Admission", code: "student-admission", icon: "UserPlus", path: "/students/admission", order: 1 },
-//   ],
-// },
+// A main menu with submenus has an empty path (see "Organization Setup").
 const defaultModules: MainMenu[] = [
   { name: "Dashboard", code: "dashboard", icon: "LayoutDashboard", path: "/dashboard", order: 1, subMenus: [] },
   {

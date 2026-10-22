@@ -1,21 +1,7 @@
 import mongoose from "mongoose";
 
-// The menu of a school is stored as ONE document per school:
-//
-// {
-//   schlId: <school id>,
-//   modules: [                      <- main menus (shown sorted by order, lowest first)
-//     {
-//       name, code, icon, path, order, isActive, deleted,
-//       subMenus: [                 <- submenus of this main menu (shown sorted by order, lowest first)
-//         { name, code, icon, path, order, isActive, deleted }
-//       ]
-//     }
-//   ]
-// }
-//
-// Each school has its own document, so one school can rename, reorder or
-// switch off a menu without affecting any other school.
+// ONE menu document per school: { schlId, modules: [mainMenu { ..., subMenus: [...] }] }.
+// So each school can rename, reorder or switch off menus without affecting others.
 
 // A submenu, e.g. "Admission" under "Students". It always opens a page, so path is required.
 const subMenuSchema = new mongoose.Schema({
@@ -34,8 +20,7 @@ const subMenuSchema = new mongoose.Schema({
   deleted: { type: Boolean, default: false },
 });
 
-// A main menu, e.g. "Students".
-// It either links to a page directly (has a path, no submenus, like "Dashboard")
+// A main menu, e.g. "Students". It either links to a page (like "Dashboard")
 // or only groups its submenus (empty path).
 const mainMenuSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
@@ -63,9 +48,8 @@ const moduleSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Every menu code (main menus and submenus together) must be unique within a school,
-// so any menu item can be found by its code alone.
-// MongoDB indexes cannot check this inside an array, so we check it before saving.
+// Every menu code (main menus and submenus) must be unique within a school.
+// Indexes cannot check this inside an array, so we check it before saving.
 moduleSchema.pre("validate", function () {
   const seenCodes = new Set<string>();
 

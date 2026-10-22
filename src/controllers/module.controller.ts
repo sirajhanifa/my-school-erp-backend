@@ -6,9 +6,8 @@ import User from "../models/user.model.js";
 // GET /api/modules  (protected: returns the menu of the logged-in user's school)
 export const getModules = async (_req: Request, res: Response) => {
   try {
-    // 1. Find the user's school.
-    // The school always comes from the logged-in user, never from the request,
-    // so a user can only ever see their own school's menu.
+    // 1. Find the user's school. It comes from the logged-in user, never from the request,
+    // so a user can only see their own school's menu.
     const user = await User.findById(res.locals.userId).select("schlId isActive");
 
     if (!user || !user.isActive) {
@@ -26,8 +25,7 @@ export const getModules = async (_req: Request, res: Response) => {
     }
 
     // 3. Keep only active, not-deleted menus, sorted by order (lowest first).
-    // If a main menu is hidden, its submenus are hidden with it.
-    // Menus with the same order keep their array order, because JS sort is stable.
+    // A hidden main menu hides its submenus too.
     const modules = menuDoc.modules
       .filter((mainMenu) => mainMenu.isActive && !mainMenu.deleted)
       .sort((a, b) => a.order - b.order)

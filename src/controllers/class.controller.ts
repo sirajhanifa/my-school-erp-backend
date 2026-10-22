@@ -4,9 +4,8 @@ import mongoose from "mongoose";
 import Class from "../models/class.model.js";
 import User from "../models/user.model.js";
 
-// Returns the school id of the logged-in user, or null if the user is missing or inactive.
-// The school always comes from the logged-in user, never from the request,
-// so a user can only ever see and change their own school's classes.
+// Returns the logged-in user's school id (null if the user is missing or inactive).
+// Never taken from the request, so users can only touch their own school's classes.
 const getSchoolId = async (res: Response) => {
   const user = await User.findById(res.locals.userId).select("schlId isActive");
   if (!user || !user.isActive) return null;
