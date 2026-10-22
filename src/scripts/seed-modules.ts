@@ -24,7 +24,12 @@ type MainMenu = { name: string; code: string; icon: string; path?: string; order
 // },
 const defaultModules: MainMenu[] = [
   { name: "Dashboard", code: "dashboard", icon: "LayoutDashboard", path: "/dashboard", order: 1, subMenus: [] },
-  { name: "Organization Setup", code: "organization-setup", icon: "Building2", path: "/organization-setup", order: 2, subMenus: [] },
+  {
+    name: "Organization Setup", code: "organization-setup", icon: "Building2", path: "", order: 2,
+    subMenus: [
+      { name: "Classes", code: "classes", icon: "School", path: "/organization-setup/classes", order: 1 },
+    ],
+  },
 ];
 
 // Adds the default menu to one school.
