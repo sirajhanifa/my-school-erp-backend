@@ -8,7 +8,9 @@
     "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/index.js",
-    "seed": "tsx src/seed.ts"
+    "seed": "npm run seed:roles && npm run seed:modules",
+    "seed:roles": "tsx src/scripts/seed-roles.ts",
+    "seed:modules": "tsx src/scripts/seed-modules.ts"
   },
   "repository": {
     "type": "git",

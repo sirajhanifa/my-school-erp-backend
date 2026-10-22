@@ -4,11 +4,11 @@ import mongoose from "mongoose";
 //
 // {
 //   schlId: <school id>,
-//   modules: [                      <- main menus (array order = display order)
+//   modules: [                      <- main menus (shown sorted by order, lowest first)
 //     {
-//       name, code, icon, path, isActive, deleted,
-//       subMenus: [                 <- submenus of this main menu (array order = display order)
-//         { name, code, icon, path, isActive, deleted }
+//       name, code, icon, path, order, isActive, deleted,
+//       subMenus: [                 <- submenus of this main menu (shown sorted by order, lowest first)
+//         { name, code, icon, path, order, isActive, deleted }
 //       ]
 //     }
 //   ]
@@ -26,6 +26,8 @@ const subMenuSchema = new mongoose.Schema({
   icon: { type: String, trim: true, default: "Circle" },
   // Frontend route, e.g. "/students/admission"
   path: { type: String, required: true, trim: true },
+  // Display position: menus are shown in ascending order (1 first, then 2, ...)
+  order: { type: Number, default: 0 },
   // An inactive menu is switched off for this school but can be turned back on
   isActive: { type: Boolean, default: true },
   // Soft delete: a deleted menu stays in the database but is hidden
@@ -40,6 +42,7 @@ const mainMenuSchema = new mongoose.Schema({
   code: { type: String, required: true, lowercase: true, trim: true },
   icon: { type: String, trim: true, default: "Box" },
   path: { type: String, trim: true, default: "" },
+  order: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
   deleted: { type: Boolean, default: false },
   subMenus: { type: [subMenuSchema], default: [] },

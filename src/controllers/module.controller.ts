@@ -25,24 +25,29 @@ export const getModules = async (_req: Request, res: Response) => {
       return res.status(200).json({ modules: [] });
     }
 
-    // 3. Keep only active, not-deleted menus (array order = display order).
+    // 3. Keep only active, not-deleted menus, sorted by order (lowest first).
     // If a main menu is hidden, its submenus are hidden with it.
+    // Menus with the same order keep their array order, because JS sort is stable.
     const modules = menuDoc.modules
       .filter((mainMenu) => mainMenu.isActive && !mainMenu.deleted)
+      .sort((a, b) => a.order - b.order)
       .map((mainMenu) => ({
         id: mainMenu._id.toString(),
         name: mainMenu.name,
         code: mainMenu.code,
         icon: mainMenu.icon,
         path: mainMenu.path,
+        order: mainMenu.order,
         subMenus: mainMenu.subMenus
           .filter((subMenu) => subMenu.isActive && !subMenu.deleted)
+          .sort((a, b) => a.order - b.order)
           .map((subMenu) => ({
             id: subMenu._id.toString(),
             name: subMenu.name,
             code: subMenu.code,
             icon: subMenu.icon,
             path: subMenu.path,
+            order: subMenu.order,
           })),
       }));
 
