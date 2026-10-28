@@ -16,7 +16,7 @@ const cookieOptions: CookieOptions = {
 // POST /api/auth/login
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password, rememberMe } = req.body ?? {};
+    const { email, password } = req.body ?? {};
 
     // 1. Validate input
     if (!email || !password) {
@@ -51,8 +51,8 @@ export const login = async (req: Request, res: Response) => {
         });
     }
 
-    // 4. Generate the JWT ("Remember me" = 7 days, otherwise 1 day)
-    const expiresInMs = rememberMe ? 7 * ONE_DAY_IN_MS : ONE_DAY_IN_MS;
+    // 4. Generate the JWT (valid for 1 day)
+    const expiresInMs = ONE_DAY_IN_MS;
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET as string,

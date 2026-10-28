@@ -54,7 +54,7 @@ src/
 
 ## Auth
 
-- `POST /api/auth/login` → signs a JWT `{ userId }`, sets it in an httpOnly `token` cookie (1 day, or 7 days with `rememberMe`). Same error message for wrong email and wrong password.
+- `POST /api/auth/login` → signs a JWT `{ userId }`, sets it in an httpOnly `token` cookie (1 day). Same error message for wrong email and wrong password.
 - `POST /api/auth/logout` clears the cookie. `GET /api/auth/me` (behind `protect`) returns the current user.
 - Inactive users (`isActive: false`) get 403 at login and 401 from `/me`.
 - Never return `password` or the token in a response body.
