@@ -21,6 +21,7 @@ const defaultModules: MainMenu[] = [
     name: "Organization Setup", code: "organization-setup", icon: "Building2", path: "", order: 2,
     subMenus: [
       { name: "Classes", code: "classes", icon: "School", path: "/organization-setup/classes", order: 1 },
+      { name: "Sections", code: "sections", icon: "LayoutList", path: "/organization-setup/sections", order: 2 },
     ],
   },
 ];
