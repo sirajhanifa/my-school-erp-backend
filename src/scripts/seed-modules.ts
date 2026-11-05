@@ -24,6 +24,12 @@ const defaultModules: MainMenu[] = [
       { name: "Sections", code: "sections", icon: "LayoutList", path: "/organization-setup/sections", order: 2 },
     ],
   },
+  {
+    name: "Users", code: "users", icon: "Users", path: "", order: 3,
+    subMenus: [
+      { name: "Students", code: "students", icon: "GraduationCap", path: "/users/students", order: 1 },
+    ],
+  },
 ];
 
 // Adds the default menu to one school.
