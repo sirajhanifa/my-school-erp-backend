@@ -111,7 +111,8 @@ const validateStudentBody = async (
 };
 
 // GET /api/students  (protected: lists the students of the logged-in user's school)
-export const getStudents = async (_req: Request, res: Response) => {
+// Optional filters: ?classId=...&sectionId=...  (missing = all)
+export const getStudents = async (req: Request, res: Response) => {
   try {
     const schlId = await getSchoolId(res);
     if (!schlId) {
@@ -120,8 +121,26 @@ export const getStudents = async (_req: Request, res: Response) => {
         .json({ message: "User not found. Please log in again." });
     }
 
+    // schlId always comes from the logged-in user, so filters can never reach another school
+    const query: Record<string, unknown> = { schlId, deleted: false };
+
+    const { classId, sectionId } = req.query;
+    if (classId !== undefined) {
+      // A bad id cannot match any student, so the answer is simply an empty list
+      if (!mongoose.isValidObjectId(classId)) {
+        return res.status(200).json({ students: [] });
+      }
+      query.classId = classId;
+    }
+    if (sectionId !== undefined) {
+      if (!mongoose.isValidObjectId(sectionId)) {
+        return res.status(200).json({ students: [] });
+      }
+      query.sectionId = sectionId;
+    }
+
     // numericOrdering: "2" comes before "10"
-    const students = await Student.find({ schlId, deleted: false })
+    const students = await Student.find(query)
       .collation({ locale: "en", numericOrdering: true })
       .sort({ admissionNo: 1 })
       .populate(populateNames);

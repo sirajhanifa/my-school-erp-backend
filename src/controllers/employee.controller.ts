@@ -103,7 +103,8 @@ export const getEmployeeRoles = async (_req: Request, res: Response) => {
 };
 
 // GET /api/employees  (protected: lists the employees of the logged-in user's school)
-export const getEmployees = async (_req: Request, res: Response) => {
+// Optional filter: ?roleId=...  (missing = all)
+export const getEmployees = async (req: Request, res: Response) => {
   try {
     const schlId = await getSchoolId(res);
     if (!schlId) {
@@ -112,7 +113,19 @@ export const getEmployees = async (_req: Request, res: Response) => {
         .json({ message: "User not found. Please log in again." });
     }
 
-    const employees = await User.find({ schlId, ...notDeleted })
+    // schlId always comes from the logged-in user, so the filter can never reach another school
+    const query: Record<string, unknown> = { schlId, ...notDeleted };
+
+    const { roleId } = req.query;
+    if (roleId !== undefined) {
+      // A bad id cannot match any employee, so the answer is simply an empty list
+      if (!mongoose.isValidObjectId(roleId)) {
+        return res.status(200).json({ employees: [] });
+      }
+      query.role = roleId;
+    }
+
+    const employees = await User.find(query)
       .collation({ locale: "en" })
       .sort({ name: 1 })
       .populate(populateRole);
