@@ -22,6 +22,7 @@ const defaultModules: MainMenu[] = [
     subMenus: [
       { name: "Classes", code: "classes", icon: "School", path: "/organization-setup/classes", order: 1 },
       { name: "Sections", code: "sections", icon: "LayoutList", path: "/organization-setup/sections", order: 2 },
+      { name: "Academic Years", code: "academic-years", icon: "CalendarRange", path: "/organization-setup/academic-years", order: 3 },
     ],
   },
   {
