@@ -30,6 +30,8 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     isActive: { type: Boolean, default: true },
+    // Soft delete. Older users have no such field, so query with deleted: { $ne: true }
+    deleted: { type: Boolean, default: false },
   },
   // Adds createdAt and updatedAt automatically
   { timestamps: true },

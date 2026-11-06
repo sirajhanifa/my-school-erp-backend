@@ -28,6 +28,7 @@ const defaultModules: MainMenu[] = [
     name: "Users", code: "users", icon: "Users", path: "", order: 3,
     subMenus: [
       { name: "Students", code: "students", icon: "GraduationCap", path: "/users/students", order: 1 },
+      { name: "Employees", code: "employees", icon: "BriefcaseBusiness", path: "/users/employees", order: 2 },
     ],
   },
 ];

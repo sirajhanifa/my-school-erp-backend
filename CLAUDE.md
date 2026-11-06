@@ -6,14 +6,15 @@ Multi-tenant school ERP API. Express 5 + Mongoose 9 + TypeScript, ESM (`"type": 
 
 - `npm run dev` — nodemon runs `tsx src/index.ts`, restarts on changes in `src/`
 - `npm run build` — `tsc` to `dist/`; `npm start` runs `dist/index.js`
-- `npm run seed` — runs both seed scripts below (safe to re-run)
+- `npm run seed` — runs all seed scripts below (safe to re-run)
+- `npm run seed:default-password` — `src/scripts/seed-default-password.ts`, gives each school without one a `DefaultPassword` from `DEFAULT_USER_PASSWORD`
 - `npm run seed:roles` — `src/scripts/seed-roles.ts`, upserts the default roles
 - `npm run seed:modules` — `src/scripts/seed-modules.ts`, gives every school the default menu (only adds missing items). To add a module, edit `defaultModules` there and run this script.
 - `npx tsc --noEmit` — type-check. There are no tests and no linter.
 
 ## Environment (`.env`)
 
-`PORT` (9000 — the frontend's Vite proxy points here), `NODE_ENV`, `MONGO_URI`, `JWT_SECRET`.
+`PORT` (9000 — the frontend's Vite proxy points here), `NODE_ENV`, `MONGO_URI`, `JWT_SECRET`, `DEFAULT_USER_PASSWORD` (only read by the default-password seed).
 `import "dotenv/config"` must stay the first import in any entry file (`index.ts`, `scripts/*.ts`).
 
 ## Layout
@@ -44,7 +45,8 @@ src/
 ## Data model
 
 - **School** (`schools`) is the tenant. Fields use abbreviated names: `schlNm`, `schlCd` (unique slug), and other models reference it via `schlId`. Data must never leak across schools — scope tenant data queries by `schlId`.
-- **User** (`users`): `schlId`, `name`, `email` (globally unique), `password` (`select: false`, bcrypt-hashed in a `pre("save")` hook — always save through the model, never write passwords with `updateOne`), `role`, `isActive`.
+- **User** (`users`): `schlId`, `name`, `email` (globally unique), `password` (`select: false`, bcrypt-hashed in a `pre("save")` hook — always save through the model, never write passwords with `updateOne`), `role`, `isActive`, `deleted` (soft delete; older users lack the field, so filter with `deleted: { $ne: true }`). Managed in the UI as **Employees** (`/api/employees`); deleting also sets `isActive: false`.
+- **DefaultPassword** (`defaultpasswords`): one per school (`schlId` unique), `password` (plain text, `select: false`). `createEmployee` reads it and passes it to `User.create`, so the User hook hashes it.
 - **Role** (`roles`): `name`, `description`, `deleted` (soft delete), timestamps. `name` is unique among non-deleted roles (partial index). Seeded roles: admin, principal, teacher, accountant, librarian, student, parent.
 - `User.role` is an **ObjectId ref to Role**. Populate it to get the name: `.populate<{ role: { name: string } | null }>("role", "name")`. The API returns `role` as the role *name* string to the frontend.
 - A model used in `populate()` must be registered before the query runs. `user.model.ts` imports `./role.model.js` for this reason — when adding new refs, import the referenced model in the referencing model file, or you'll get `MissingSchemaError`.
