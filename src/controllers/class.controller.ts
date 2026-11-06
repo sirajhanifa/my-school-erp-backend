@@ -26,11 +26,13 @@ const toClassResponse = (cls: InstanceType<typeof Class>) => ({
   id: cls.id,
   name: cls.name,
   description: cls.description,
+  // Status: deleted = Inactive, not deleted = Active
+  deleted: cls.deleted,
   createdAt: cls.createdAt,
   updatedAt: cls.updatedAt,
 });
 
-// GET /api/classes  (protected: lists the classes of the logged-in user's school)
+// GET /api/classes  (protected: lists all classes of the logged-in user's school, active and inactive)
 export const getClasses = async (_req: Request, res: Response) => {
   try {
     const schlId = await getSchoolId(res);
@@ -40,7 +42,7 @@ export const getClasses = async (_req: Request, res: Response) => {
         .json({ message: "User not found. Please log in again." });
     }
 
-    const classes = await Class.find({ schlId, deleted: false }).sort({ name: 1 });
+    const classes = await Class.find({ schlId }).sort({ name: 1 });
 
     return res.status(200).json({ classes: classes.map(toClassResponse) });
   } catch (error) {
@@ -61,7 +63,7 @@ export const createClass = async (req: Request, res: Response) => {
         .json({ message: "User not found. Please log in again." });
     }
 
-    const { name, description } = req.body ?? {};
+    const { name, description, deleted } = req.body ?? {};
 
     if (!name || !String(name).trim()) {
       return res.status(400).json({ message: "Class name is required" });
@@ -71,6 +73,8 @@ export const createClass = async (req: Request, res: Response) => {
       schlId,
       name: String(name),
       description: description ? String(description) : "",
+      // Active unless the client sends deleted: true (Active checkbox unchecked)
+      deleted: deleted === true,
     });
 
     return res
@@ -100,7 +104,7 @@ export const updateClass = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { name, description } = req.body ?? {};
+    const { name, description, deleted } = req.body ?? {};
 
     // An invalid id cannot match any class, so treat it as "not found"
     if (!mongoose.isValidObjectId(id)) {
@@ -111,12 +115,15 @@ export const updateClass = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Class name is required" });
     }
 
-    // Filtering by schlId too makes sure a user can only update their own school's class
+    // Filtering by schlId too makes sure a user can only update their own school's class.
+    // Inactive (deleted) classes can be edited too, e.g. to make them Active again.
     const cls = await Class.findOneAndUpdate(
-      { _id: id, schlId, deleted: false },
+      { _id: id, schlId },
       {
         name: String(name),
         description: description ? String(description) : "",
+        // Only change the status when the client sends it
+        ...(typeof deleted === "boolean" && { deleted }),
       },
       // new: return the updated document; runValidators: apply the schema rules on update too
       { new: true, runValidators: true },
