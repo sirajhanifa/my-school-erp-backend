@@ -6,14 +6,13 @@ import {
   getSections,
   updateSection,
 } from "../controllers/section.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
 // Mounted at /api/sections (see routes/index.ts)
-router.get("/", protect, getSections);
-router.post("/", protect, createSection);
-router.put("/:id", protect, updateSection);
-router.delete("/:id", protect, deleteSection);
+router.get("/", getSections);
+router.post("/", createSection);
+router.put("/:id", updateSection);
+router.delete("/:id", deleteSection);
 
 export default router;
