@@ -6,6 +6,7 @@ import authRoutes from "./auth.routes.js";
 import classRoutes from "./class.routes.js";
 import employeeRoutes from "./employee.routes.js";
 import moduleRoutes from "./module.routes.js";
+import roleRoutes from "./role.routes.js";
 import sectionRoutes from "./section.routes.js";
 import studentRoutes from "./student.routes.js";
 
@@ -25,6 +26,7 @@ router.use("/sections", sectionRoutes);
 router.use("/academic-years", academicYearRoutes);
 router.use("/students", studentRoutes);
 router.use("/employees", employeeRoutes);
+router.use("/roles", roleRoutes);
 // Add new route files here, e.g.
 // router.use("/users", userRoutes);
 

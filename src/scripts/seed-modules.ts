@@ -32,6 +32,12 @@ const defaultModules: MainMenu[] = [
       { name: "Employees", code: "employees", icon: "BriefcaseBusiness", path: "/users/employees", order: 2 },
     ],
   },
+  {
+    name: "Settings", code: "settings", icon: "Settings", path: "", order: 4,
+    subMenus: [
+      { name: "Roles", code: "roles", icon: "ShieldCheck", path: "/settings/roles", order: 1 },
+    ],
+  },
 ];
 
 // Adds the default menu to one school.
