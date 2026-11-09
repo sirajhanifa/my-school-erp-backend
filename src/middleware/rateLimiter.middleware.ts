@@ -2,7 +2,8 @@ import { rateLimit } from "express-rate-limit";
 
 const loginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 3, // Maximum 5 requests
+  limit: 3, // Maximum 3 failed attempts per IP
+  skipSuccessfulRequests: true, // Only failed logins count towards the limit
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
