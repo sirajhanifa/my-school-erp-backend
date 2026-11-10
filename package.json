@@ -11,7 +11,8 @@
     "seed": "npm run seed:roles && npm run seed:modules && npm run seed:default-password",
     "seed:roles": "tsx src/scripts/seed-roles.ts",
     "seed:modules": "tsx src/scripts/seed-modules.ts",
-    "seed:default-password": "tsx src/scripts/seed-default-password.ts"
+    "seed:default-password": "tsx src/scripts/seed-default-password.ts",
+    "make-superadmin": "tsx src/scripts/make-superadmin.ts"
   },
   "repository": {
     "type": "git",

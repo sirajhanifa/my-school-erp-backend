@@ -6,10 +6,13 @@ import {
   getStudents,
   updateStudent,
 } from "../controllers/student.controller.js";
+import { requireModule } from "../middleware/moduleAccess.middleware.js";
 
 const router = Router();
 
 // Mounted at /api/students (see routes/index.ts)
+// Every route here needs the "students" module
+router.use(requireModule("students"));
 router.get("/", getStudents);
 router.post("/", createStudent);
 router.put("/:id", updateStudent);

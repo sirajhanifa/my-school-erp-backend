@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 import mongoose from "mongoose";
 
+import { FULL_ACCESS_ROLE } from "../middleware/moduleAccess.middleware.js";
+import Module from "../models/module.model.js";
 import Role from "../models/role.model.js";
 import User from "../models/user.model.js";
 
@@ -22,11 +24,52 @@ const isDuplicateKeyError = (error: unknown) =>
 // Role names are stored in lowercase, so "Admin" and "admin" count as the same role
 const cleanName = (name: unknown) => (name ? String(name).trim().toLowerCase() : "");
 
+// Codes of the pages in the logged-in user's school menu. A role may only be given these.
+const getMenuCodes = async (res: Response) => {
+  const user = await User.findById(res.locals.userId).select("schlId");
+  const menuDoc = user ? await Module.findOne({ schlId: user.schlId }) : null;
+
+  const codes = new Set<string>();
+  for (const mainMenu of menuDoc?.modules ?? []) {
+    if (mainMenu.deleted) continue;
+    // A main menu with a path is a page itself (e.g. Dashboard); otherwise only its submenus are
+    if (mainMenu.path) codes.add(mainMenu.code);
+    for (const subMenu of mainMenu.subMenus) {
+      if (!subMenu.deleted) codes.add(subMenu.code);
+    }
+  }
+  return codes;
+};
+
+// Checks the "modules" sent for a role. Returns the cleaned codes; error is "" when they are fine.
+// The superadmin role always has full access, so it stores no list.
+const cleanModules = async (
+  res: Response,
+  roleName: string,
+  value: unknown,
+): Promise<{ modules: string[]; error: string }> => {
+  if (roleName === FULL_ACCESS_ROLE) return { modules: [], error: "" };
+
+  if (!Array.isArray(value) || value.length === 0) {
+    return { modules: [], error: "Please select at least one module" };
+  }
+
+  const validCodes = await getMenuCodes(res);
+  // new Set removes duplicates
+  const modules = [...new Set(value.map((code) => String(code).trim().toLowerCase()))];
+
+  if (!modules.every((code) => validCodes.has(code))) {
+    return { modules: [], error: "Please select valid modules" };
+  }
+  return { modules, error: "" };
+};
+
 // The shape of a role sent to the frontend
 const toRoleResponse = (role: InstanceType<typeof Role>) => ({
   id: role.id,
   name: role.name,
   description: role.description ?? "",
+  modules: [...role.modules],
   createdAt: role.createdAt,
   updatedAt: role.updatedAt,
 });
@@ -60,16 +103,22 @@ export const createRole = async (req: Request, res: Response) => {
         .json({ message: "User not found. Please log in again." });
     }
 
-    const { name, description } = req.body ?? {};
+    const { name, description, modules } = req.body ?? {};
     const roleName = cleanName(name);
 
     if (!roleName) {
       return res.status(400).json({ message: "Role name is required" });
     }
 
+    const access = await cleanModules(res, roleName, modules);
+    if (access.error) {
+      return res.status(400).json({ message: access.error });
+    }
+
     const role = await Role.create({
       name: roleName,
       description: description ? String(description) : "",
+      modules: access.modules,
     });
 
     return res
@@ -98,7 +147,7 @@ export const updateRole = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { name, description } = req.body ?? {};
+    const { name, description, modules } = req.body ?? {};
     const roleName = cleanName(name);
 
     // An invalid id cannot match any role, so treat it as "not found"
@@ -110,9 +159,24 @@ export const updateRole = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Role name is required" });
     }
 
+    // Full access depends on the name "superadmin", so renaming it would lock everyone out
+    const isFullAccessRole = await Role.exists({ _id: id, deleted: false, name: FULL_ACCESS_ROLE });
+    if (isFullAccessRole && roleName !== FULL_ACCESS_ROLE) {
+      return res.status(400).json({ message: "The superadmin role cannot be renamed" });
+    }
+
+    const access = await cleanModules(res, roleName, modules);
+    if (access.error) {
+      return res.status(400).json({ message: access.error });
+    }
+
     const role = await Role.findOneAndUpdate(
       { _id: id, deleted: false },
-      { name: roleName, description: description ? String(description) : "" },
+      {
+        name: roleName,
+        description: description ? String(description) : "",
+        modules: access.modules,
+      },
       // new: return the updated document; runValidators: apply the schema rules on update too
       { new: true, runValidators: true },
     );
@@ -150,6 +214,11 @@ export const deleteRole = async (req: Request, res: Response) => {
 
     if (!mongoose.isValidObjectId(id)) {
       return res.status(404).json({ message: "Role not found" });
+    }
+
+    // The superadmin role gives full access, so it must always exist
+    if (await Role.exists({ _id: id, deleted: false, name: FULL_ACCESS_ROLE })) {
+      return res.status(400).json({ message: "The superadmin role cannot be deleted" });
     }
 
     // Users holding a deleted role could not be saved from the Employee form

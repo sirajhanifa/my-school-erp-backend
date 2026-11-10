@@ -4,6 +4,8 @@ const roleSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
+    // Menu codes this role can open, e.g. ["dashboard", "students"]. Employees get them through their role.
+    modules: { type: [String], default: [] },
     // Soft delete: a deleted role stays in the database but should be hidden from queries
     deleted: { type: Boolean, default: false },
   },

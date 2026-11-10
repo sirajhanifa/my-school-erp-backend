@@ -9,6 +9,8 @@ import connectDB from "../config/db.js";
 import Role from "../models/role.model.js";
 
 const roles = [
+  // Always has every module (see FULL_ACCESS_ROLE); give it with: npm run make-superadmin -- <email>
+  { name: "superadmin", description: "Full access to every module" },
   { name: "admin", description: "Full access to manage the school, users and settings" },
   { name: "principal", description: "Oversees academics, staff and school reports" },
   { name: "teacher", description: "Manages classes, attendance, marks and homework" },
